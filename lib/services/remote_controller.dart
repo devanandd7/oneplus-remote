@@ -161,12 +161,6 @@ class RemoteController extends ChangeNotifier {
     }
   }
 
-  Future<void> sendText(String text) async {
-    HapticService.buttonClick();
-    _addLog('[Keyboard] Sending: "$text"');
-    await _btService.sendText(text);
-  }
-
   Future<void> sendBackspace() async {
     HapticService.navigationClick();
     await _btService.sendBackspace();

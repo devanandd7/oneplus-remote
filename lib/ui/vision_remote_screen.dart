@@ -138,7 +138,7 @@ class _VisionRemoteScreenState extends State<VisionRemoteScreen> {
   Future<void> _executeCalculatedSteps(GeminiVisionAnalysis analysis) async {
     if (analysis.steps.isEmpty) {
       setState(() {
-        _statusMessage = 'Target "$target" already reached or no steps needed!';
+        _statusMessage = 'Target "${analysis.target}" already reached or no steps needed!';
       });
       return;
     }
