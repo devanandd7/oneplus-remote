@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../models/remote_key.dart';
-import '../../models/macro_button.dart';
 import '../../services/remote_controller.dart';
 import '../../utils/constants.dart';
 import 'tactile_button.dart';

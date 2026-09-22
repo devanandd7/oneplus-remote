@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import '../../models/remote_key.dart';
 import '../../services/remote_controller.dart';
 import '../../utils/constants.dart';
-import 'tactile_button.dart';
 
 class KeyboardSheet extends StatefulWidget {
   final RemoteController controller;
