@@ -434,6 +434,7 @@ class BluetoothHidManager(private val context: Context) {
                     Log.i(TAG, "Camera key triggered via Bluetooth HID")
                 }
                 "SETTINGS" -> sendConsumerReport(device, USAGE_SETTINGS)
+                "INPUT" -> sendConsumerReport(device, USAGE_MENU)
                 "YOUTUBE" -> sendConsumerReport(device, USAGE_YOUTUBE)
                 else -> Log.w(TAG, "Unknown key '$keyName' requested for HID")
             }

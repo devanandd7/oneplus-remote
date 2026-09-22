@@ -17,6 +17,7 @@ enum RemoteKey {
   primeVideo,
   youtube,
   settings,
+  input,
 }
 
 class RemoteKeyHelper {
@@ -53,6 +54,8 @@ class RemoteKeyHelper {
         return 27; // KEYCODE_CAMERA
       case RemoteKey.settings:
         return 176; // KEYCODE_SETTINGS
+      case RemoteKey.input:
+        return 178; // KEYCODE_TV_INPUT
       default:
         return 0; // KEYCODE_UNKNOWN
     }
@@ -105,6 +108,8 @@ class RemoteKeyHelper {
         return 'YOUTUBE';
       case RemoteKey.settings:
         return 'SETTINGS';
+      case RemoteKey.input:
+        return 'INPUT';
       default:
         return '';
     }

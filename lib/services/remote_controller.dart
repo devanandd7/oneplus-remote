@@ -395,6 +395,90 @@ class RemoteController extends ChangeNotifier {
     }
   }
 
+  /// Smart HDMI Switcher: Uses Ceiling-Anchor navigation or TV Companion direct click
+  Future<void> switchHdmiInput(int hdmiPort) async {
+    if (_isPlayingMacro) return;
+
+    _isPlayingMacro = true;
+    _playingMacroTitle = 'Switching to HDMI $hdmiPort';
+    _playingStepIndex = 0;
+    _playbackStatusMessage = 'Initiating Smart HDMI $hdmiPort Switch...';
+    _addLog('[Input] 📺 Smart Switch: Target HDMI $hdmiPort');
+    notifyListeners();
+
+    try {
+      // 1. If TV Companion is connected, attempt verified direct click
+      if (_companionClient.isConnected) {
+        _playbackStatusMessage = 'Companion: Clicking "HDMI $hdmiPort"...';
+        notifyListeners();
+        final clicked = await _companionClient.clickText('HDMI $hdmiPort');
+        if (clicked) {
+          _addLog('[Input] ✅ Directly switched to HDMI $hdmiPort via Companion click!');
+          return;
+        }
+      }
+
+      // 2. Ceiling-Anchor Navigation (Works reliably via Bluetooth HID / Wi-Fi)
+      // Step A: Open Inputs Menu
+      _playbackStatusMessage = 'Step 1/4: Opening Inputs Menu...';
+      notifyListeners();
+      if (_currentMode == RemoteEngineMode.wifi) {
+        await _wifiService.sendKey(RemoteKey.input);
+      } else {
+        await _btService.sendKey(RemoteKey.input);
+      }
+      await Future.delayed(const Duration(milliseconds: 700));
+
+      // Step B: Press UP 5 times to hit top boundary/ceiling (anchors reliably on DTV)
+      _playbackStatusMessage = 'Step 2/4: Aligning cursor to Top (DTV)...';
+      notifyListeners();
+      for (int i = 0; i < 5; i++) {
+        if (!_isPlayingMacro) return;
+        if (_currentMode == RemoteEngineMode.wifi) {
+          await _wifiService.sendKey(RemoteKey.dpadUp);
+        } else {
+          await _btService.sendKey(RemoteKey.dpadUp);
+        }
+        await Future.delayed(const Duration(milliseconds: 160));
+      }
+      await Future.delayed(const Duration(milliseconds: 250));
+
+      // Step C: Press DOWN to reach target:
+      // Menu list: 0: DTV, 1: ATV, 2: Composite, 3: HDMI 1, 4: HDMI 2, 5: Android TV Home
+      final downCount = hdmiPort == 1 ? 3 : 4;
+      _playbackStatusMessage = 'Step 3/4: Navigating to HDMI $hdmiPort ($downCount down)...';
+      notifyListeners();
+      for (int i = 0; i < downCount; i++) {
+        if (!_isPlayingMacro) return;
+        if (_currentMode == RemoteEngineMode.wifi) {
+          await _wifiService.sendKey(RemoteKey.dpadDown);
+        } else {
+          await _btService.sendKey(RemoteKey.dpadDown);
+        }
+        await Future.delayed(const Duration(milliseconds: 200));
+      }
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // Step D: Confirm selection with ENTER (dpadCenter)
+      _playbackStatusMessage = 'Step 4/4: Confirming HDMI $hdmiPort...';
+      notifyListeners();
+      if (_currentMode == RemoteEngineMode.wifi) {
+        await _wifiService.sendKey(RemoteKey.dpadCenter);
+      } else {
+        await _btService.sendKey(RemoteKey.dpadCenter);
+      }
+      _addLog('[Input] ✅ Successfully switched to HDMI $hdmiPort via Ceiling Anchor!');
+    } catch (e) {
+      _addLog('[Input] Error switching HDMI $hdmiPort: $e');
+    } finally {
+      _isPlayingMacro = false;
+      _playingMacroTitle = null;
+      _playingStepIndex = 0;
+      _playbackStatusMessage = '';
+      notifyListeners();
+    }
+  }
+
   Future<void> scanForWifiTvs() async {
     _discoveredDevices.clear();
     notifyListeners();

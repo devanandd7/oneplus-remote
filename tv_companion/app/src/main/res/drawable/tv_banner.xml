@@ -1,0 +1,51 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <!-- Background Card -->
+    <path
+        android:fillColor="#1A1C1E"
+        android:pathData="M0,0h320v180h-320z" />
+    
+    <!-- Red Accent Top Bar -->
+    <path
+        android:fillColor="#EB0029"
+        android:pathData="M0,0h320v8h-320z" />
+
+    <!-- Subtle Red Gradient Glow -->
+    <path
+        android:fillColor="#2D1115"
+        android:pathData="M0,8h320v50h-320z" />
+
+    <!-- TV Screen Icon Outer Frame (Center: 160, 75) -->
+    <path
+        android:fillColor="#EB0029"
+        android:pathData="M110,40 h100 a8,8 0 0,1 8,8 v52 a8,8 0 0,1 -8,8 h-100 a8,8 0 0,1 -8,-8 v-52 a8,8 0 0,1 8,-8 z" />
+
+    <!-- TV Screen Display Inside Frame -->
+    <path
+        android:fillColor="#121212"
+        android:pathData="M116,46 h88 a4,4 0 0,1 4,4 v40 a4,4 0 0,1 -4,4 h-88 a4,4 0 0,1 -4,-4 v-40 a4,4 0 0,1 4,-4 z" />
+
+    <!-- TV Stand Base -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M152,108 h16 v10 h-16 z M140,118 h40 v4 h-40 z" />
+
+    <!-- Remote Signal Waves inside TV -->
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M160,62 a10,10 0 0,1 0,14 a3,3 0 0,1 0,-14 z" />
+    <path
+        android:fillColor="#EB0029"
+        android:pathData="M150,69 a10,10 0 1,1 20,0 a10,10 0 0,1 -20,0 z" />
+
+    <!-- Bottom App Title Pill Bar -->
+    <path
+        android:fillColor="#2A2D32"
+        android:pathData="M40,140 h240 a12,12 0 0,1 12,12 v0 a12,12 0 0,1 -12,12 h-240 a12,12 0 0,1 -12,-12 v0 a12,12 0 0,1 12,-12 z" />
+    <path
+        android:fillColor="#EB0029"
+        android:pathData="M52,148 h16 v8 h-16 z" />
+</vector>

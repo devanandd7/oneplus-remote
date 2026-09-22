@@ -49,6 +49,7 @@ migrate_working_dir/
 *.apk
 !OnePlusTvCompanion.apk
 !assets/OnePlusTvCompanion.apk
+image copy*.png
 tv_companion/local.properties
 tv_companion/.gradle/
 tv_companion/**/build/

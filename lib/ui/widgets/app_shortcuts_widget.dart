@@ -79,7 +79,67 @@ class AppShortcutsWidget extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
+
+        // Smart HDMI Switcher Row: [ HDMI 1 ] & [ HDMI 2 ]
+        Row(
+          children: [
+            Expanded(
+              child: TactileButton.pill(
+                height: 44,
+                backgroundColor: AppColors.buttonDark,
+                borderColor: AppColors.buttonBorder,
+                splashColor: Colors.blueAccent.withValues(alpha: 0.25),
+                tooltip: 'Smart Switch to HDMI 1 (Ceiling Reset)',
+                onTap: () => controller.switchHdmiInput(1),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.settings_input_hdmi, color: Colors.blueAccent, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'HDMI 1',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: TactileButton.pill(
+                height: 44,
+                backgroundColor: AppColors.buttonDark,
+                borderColor: AppColors.buttonBorder,
+                splashColor: Colors.purpleAccent.withValues(alpha: 0.25),
+                tooltip: 'Smart Switch to HDMI 2 (Ceiling Reset)',
+                onTap: () => controller.switchHdmiInput(2),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.settings_input_hdmi, color: Colors.purpleAccent, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'HDMI 2',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
 
         // Custom Buttons & Step Recording Section
         CustomMacrosWidget(controller: controller),

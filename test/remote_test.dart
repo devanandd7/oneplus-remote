@@ -21,6 +21,7 @@ void main() {
       expect(RemoteKeyHelper.getAndroidTvKeyCode(RemoteKey.mute), 164);
       expect(RemoteKeyHelper.getAndroidTvKeyCode(RemoteKey.camera), 27);
       expect(RemoteKeyHelper.getAndroidTvKeyCode(RemoteKey.settings), 176);
+      expect(RemoteKeyHelper.getAndroidTvKeyCode(RemoteKey.input), 178);
     });
 
     test('App shortcut deep links are correct', () {
