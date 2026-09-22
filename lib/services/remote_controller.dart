@@ -161,6 +161,27 @@ class RemoteController extends ChangeNotifier {
     }
   }
 
+  Future<void> sendText(String text) async {
+    HapticService.buttonClick();
+    _addLog('[Keyboard] Sending: "$text"');
+    await _btService.sendText(text);
+  }
+
+  Future<void> sendBackspace() async {
+    HapticService.navigationClick();
+    await _btService.sendBackspace();
+  }
+
+  Future<void> sendSpace() async {
+    HapticService.navigationClick();
+    await _btService.sendSpace();
+  }
+
+  Future<void> sendEnter() async {
+    HapticService.buttonClick();
+    await _btService.sendEnter();
+  }
+
   // --- Macro Recording & Playback Management ---
 
   Future<void> loadSavedMacros() async {

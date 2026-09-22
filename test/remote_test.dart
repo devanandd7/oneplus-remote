@@ -4,6 +4,7 @@ import 'package:oneplus_remote/models/tv_device.dart';
 import 'package:oneplus_remote/models/macro_button.dart';
 import 'package:oneplus_remote/services/tv_companion_client.dart';
 import 'package:oneplus_remote/services/local_apk_server_service.dart';
+import 'package:oneplus_remote/services/gemini_vision_service.dart';
 
 void main() {
   group('RemoteKey Mappings', () {
@@ -119,6 +120,28 @@ void main() {
 
       await server.stop();
       expect(server.isRunning, isFalse);
+    });
+  });
+
+  group('GeminiVisionService', () {
+    test('GeminiVisionAnalysis structures navigation data properly', () {
+      const analysis = GeminiVisionAnalysis(
+        currentScreen: 'Android TV Home',
+        currentFocus: 'Netflix',
+        activeTab: 'Home',
+        target: 'HDMI 1',
+        steps: [RemoteKey.dpadUp, RemoteKey.dpadRight, RemoteKey.ok],
+        rawStepNames: ['UP', 'RIGHT', 'OK'],
+        explanation: 'Move UP to top bar, navigate RIGHT to Inputs, and select HDMI 1.',
+        success: true,
+      );
+
+      expect(analysis.success, isTrue);
+      expect(analysis.currentScreen, 'Android TV Home');
+      expect(analysis.currentFocus, 'Netflix');
+      expect(analysis.steps.length, 3);
+      expect(analysis.steps.first, RemoteKey.dpadUp);
+      expect(analysis.steps.last, RemoteKey.ok);
     });
   });
 }

@@ -119,6 +119,36 @@ class BluetoothHidService {
     }
   }
 
+  Future<void> sendBackspace() async {
+    try {
+      await _methodChannel.invokeMethod('sendBackspace');
+    } on MissingPluginException {
+      _log('Emulated HID Backspace');
+    } catch (e) {
+      _log('Failed to send Backspace: $e');
+    }
+  }
+
+  Future<void> sendSpace() async {
+    try {
+      await _methodChannel.invokeMethod('sendSpace');
+    } on MissingPluginException {
+      _log('Emulated HID Space');
+    } catch (e) {
+      _log('Failed to send Space: $e');
+    }
+  }
+
+  Future<void> sendEnter() async {
+    try {
+      await _methodChannel.invokeMethod('sendEnter');
+    } on MissingPluginException {
+      _log('Emulated HID Enter');
+    } catch (e) {
+      _log('Failed to send Enter: $e');
+    }
+  }
+
   Future<List<Map<String, String>>> getBondedDevices() async {
     try {
       final List? list = await _methodChannel.invokeMethod<List>('getBondedDevices');

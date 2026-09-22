@@ -85,6 +85,18 @@ class MainActivity : FlutterActivity() {
                     hidManager?.sendText(text)
                     result.success(true)
                 }
+                "sendBackspace" -> {
+                    hidManager?.sendBackspace()
+                    result.success(true)
+                }
+                "sendSpace" -> {
+                    hidManager?.sendSpace()
+                    result.success(true)
+                }
+                "sendEnter" -> {
+                    hidManager?.sendEnter()
+                    result.success(true)
+                }
                 "unregisterHid" -> {
                     hidManager?.unregisterApp()
                     result.success(true)

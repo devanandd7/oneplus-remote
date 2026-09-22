@@ -10,6 +10,7 @@ import 'widgets/app_shortcuts_widget.dart';
 import 'widgets/discovery_sheet.dart';
 import 'widgets/macro_recording_banner.dart';
 import 'widgets/custom_macros_widget.dart';
+import 'vision_remote_screen.dart';
 
 class RemoteScreen extends StatefulWidget {
   const RemoteScreen({Key? key}) : super(key: key);
@@ -126,6 +127,49 @@ class _RemoteScreenState extends State<RemoteScreen> {
                                       color: _controller.isCompanionConnected
                                           ? AppColors.statusConnected
                                           : Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // AI Vision Remote Button
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (ctx) => VisionRemoteScreen(controller: _controller),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1B1B2C),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.cyanAccent.withValues(alpha: 0.6),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(
+                                    Icons.camera_alt_outlined,
+                                    size: 14,
+                                    color: Colors.cyanAccent,
+                                  ),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    'AI Vision',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.cyanAccent,
                                     ),
                                   ),
                                 ],

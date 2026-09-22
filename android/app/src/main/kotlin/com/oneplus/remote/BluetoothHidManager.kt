@@ -341,6 +341,24 @@ class BluetoothHidManager(private val context: Context) {
         }
     }
 
+    fun sendBackspace() {
+        val hid = bluetoothHidDevice ?: return
+        val device = connectedDevice ?: findBondedTv() ?: return
+        sendKeyboardReport(device, 0x2A.toByte()) // Keyboard Delete (Backspace)
+    }
+
+    fun sendSpace() {
+        val hid = bluetoothHidDevice ?: return
+        val device = connectedDevice ?: findBondedTv() ?: return
+        sendKeyboardReport(device, 0x2C.toByte()) // Keyboard Spacebar
+    }
+
+    fun sendEnter() {
+        val hid = bluetoothHidDevice ?: return
+        val device = connectedDevice ?: findBondedTv() ?: return
+        sendKeyboardReport(device, KEY_ENTER) // Keyboard Return
+    }
+
     private fun sendChar(device: BluetoothDevice, ch: Char) {
         val hid = bluetoothHidDevice ?: return
         val mapping = getHidCodeForChar(ch) ?: return
