@@ -45,8 +45,13 @@ class GeminiVisionAnalysis {
 class GeminiVisionService {
   static const String _prefApiKey = 'gemini_api_key';
   static const String _prefModel = 'gemini_model_name';
-
-  static const String defaultModel = 'gemini-2.0-flash';
+  static const String defaultModel = 'gemini-3.5-flash';
+  static const List<String> availableModels = [
+    'gemini-3.5-flash',
+    'gemini-3.8-flash',
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+  ];
 
   Future<String?> getApiKey() async {
     final prefs = await SharedPreferences.getInstance();

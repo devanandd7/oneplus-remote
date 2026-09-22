@@ -4,7 +4,6 @@ import 'package:camera/camera.dart';
 import '../services/remote_controller.dart';
 import '../services/gemini_vision_service.dart';
 import '../services/haptic_service.dart';
-import '../models/remote_key.dart';
 import '../utils/constants.dart';
 
 class VisionRemoteScreen extends StatefulWidget {
@@ -185,73 +184,122 @@ class _VisionRemoteScreenState extends State<VisionRemoteScreen> {
 
   void _showApiKeyDialog() async {
     final currentKey = await _visionService.getApiKey() ?? '';
+    final currentModel = await _visionService.getSelectedModel();
     final textController = TextEditingController(text: currentKey);
+    String selectedModel = currentModel;
 
     if (!mounted) return;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2C),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: const [
-            Icon(Icons.auto_awesome, color: Colors.amber, size: 22),
-            SizedBox(width: 8),
-            Text(
-              'Gemini AI Settings',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Enter your Google Gemini API Key. Get one for free from Google AI Studio (aistudio.google.com):',
-              style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: textController,
-              obscureText: true,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'AIzaSy...',
-                hintStyle: const TextStyle(color: Colors.white30),
-                filled: true,
-                fillColor: const Color(0xFF12121A),
-                border: OutlineInputBorder(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1E1E2C),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: const [
+              Icon(Icons.auto_awesome, color: Colors.amber, size: 22),
+              SizedBox(width: 8),
+              Text(
+                'Gemini AI Settings',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'AI Model Selection:',
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF12121A),
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.white12),
+                  border: Border.all(color: Colors.white12),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.onePlusRed),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: selectedModel,
+                    isExpanded: true,
+                    dropdownColor: const Color(0xFF1E1E2C),
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    items: GeminiVisionService.availableModels.map((m) {
+                      return DropdownMenuItem<String>(
+                        value: m,
+                        child: Text(
+                          m == 'gemini-3.5-flash'
+                              ? '$m (Recommended)'
+                              : m,
+                          style: TextStyle(
+                            color: m == 'gemini-3.5-flash'
+                                ? Colors.cyanAccent
+                                : Colors.white,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setDialogState(() {
+                          selectedModel = val;
+                        });
+                      }
+                    },
+                  ),
                 ),
               ),
+              const SizedBox(height: 14),
+              const Text(
+                'Google Gemini API Key (from aistudio.google.com):',
+                style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.3),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: textController,
+                obscureText: true,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'AIzaSy...',
+                  hintStyle: const TextStyle(color: Colors.white30),
+                  filled: true,
+                  fillColor: const Color(0xFF12121A),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.onePlusRed),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.onePlusRed,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                await _visionService.saveApiKey(textController.text.trim());
+                await _visionService.saveSelectedModel(selectedModel);
+                Navigator.pop(ctx);
+                _showToast('Settings saved! Model: $selectedModel');
+              },
+              child: const Text('Save'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.onePlusRed,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              await _visionService.saveApiKey(textController.text.trim());
-              Navigator.pop(ctx);
-              _showToast('Gemini API Key saved!');
-            },
-            child: const Text('Save Key'),
-          ),
-        ],
       ),
     );
   }
