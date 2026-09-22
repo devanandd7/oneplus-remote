@@ -3,6 +3,7 @@ import 'package:oneplus_remote/models/remote_key.dart';
 import 'package:oneplus_remote/models/tv_device.dart';
 import 'package:oneplus_remote/models/macro_button.dart';
 import 'package:oneplus_remote/services/tv_companion_client.dart';
+import 'package:oneplus_remote/services/local_apk_server_service.dart';
 
 void main() {
   group('RemoteKey Mappings', () {
@@ -103,6 +104,20 @@ void main() {
       expect(state.isHome, isFalse);
       expect(state.displayName, 'YouTube');
       expect(state.isAccessibilityActive, isTrue);
+    });
+  });
+
+  group('LocalApkServerService', () {
+    test('LocalApkServer binds, generates download URL, and stops cleanly', () async {
+      final server = LocalApkServerService();
+      final started = await server.start(port: 9876);
+      expect(started, isTrue);
+      expect(server.isRunning, isTrue);
+      expect(server.port, 9876);
+      expect(server.downloadUrl, contains(':9876/download'));
+
+      await server.stop();
+      expect(server.isRunning, isFalse);
     });
   });
 }

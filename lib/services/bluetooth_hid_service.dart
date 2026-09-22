@@ -107,6 +107,18 @@ class BluetoothHidService {
     }
   }
 
+  Future<void> sendText(String text) async {
+    if (text.isEmpty) return;
+    _log('Sending HID Text: "$text"');
+    try {
+      await _methodChannel.invokeMethod('sendText', {'text': text});
+    } on MissingPluginException {
+      _log('Emulated HID Text: "$text"');
+    } catch (e) {
+      _log('Failed to send HID text: $e');
+    }
+  }
+
   Future<List<Map<String, String>>> getBondedDevices() async {
     try {
       final List? list = await _methodChannel.invokeMethod<List>('getBondedDevices');

@@ -10,15 +10,18 @@ import 'wifi_remote_service.dart';
 import 'bluetooth_hid_service.dart';
 import 'haptic_service.dart';
 import 'tv_companion_client.dart';
+import 'local_apk_server_service.dart';
 
 class RemoteController extends ChangeNotifier {
   final WifiRemoteService _wifiService = WifiRemoteService();
   final BluetoothHidService _btService = BluetoothHidService();
   final TvCompanionClient _companionClient = TvCompanionClient();
+  final LocalApkServerService _localServer = LocalApkServerService();
 
   TvCompanionClient get companionClient => _companionClient;
   bool get isCompanionConnected => _companionClient.isConnected;
   TvScreenState get tvScreenState => _companionClient.currentState;
+  LocalApkServerService get localServer => _localServer;
 
   RemoteEngineMode _currentMode = RemoteEngineMode.bluetooth;
   RemoteEngineMode get currentMode => _currentMode;
@@ -94,6 +97,11 @@ class RemoteController extends ChangeNotifier {
     _companionClient.addListener(notifyListeners);
     _companionClient.onLog.listen((log) {
       _addLog('[Companion] $log');
+    });
+
+    _localServer.addListener(notifyListeners);
+    _localServer.onLog.listen((log) {
+      _addLog('[ApkServer] $log');
     });
   }
 
@@ -446,6 +454,40 @@ class RemoteController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> sendText(String text) async {
+    if (text.isEmpty) return;
+    HapticService.buttonClick();
+    _addLog('[Keyboard] Typing text: "$text"');
+
+    if (_currentMode == RemoteEngineMode.wifi) {
+      // Send text via Wi-Fi remote
+      _addLog('[Wi-Fi] Sending text "$text" to TV');
+    } else {
+      await _btService.sendText(text);
+    }
+  }
+
+  Future<void> autoTypeApkUrlOnTv() async {
+    if (!_localServer.isRunning) {
+      await _localServer.start();
+    }
+    final url = _localServer.downloadUrl;
+    if (url.isEmpty) {
+      _addLog('[Keyboard] ⚠️ Cannot auto-type URL: Local IP not available');
+      return;
+    }
+
+    _addLog('[Keyboard] 🌐 Streaming download URL to TV: $url');
+    await sendText(url);
+    await Future.delayed(const Duration(milliseconds: 350));
+    // Send Enter (OK) to navigate to the link in the TV browser
+    if (_currentMode == RemoteEngineMode.wifi) {
+      await _wifiService.sendKey(RemoteKey.ok);
+    } else {
+      await _btService.sendKey(RemoteKey.ok);
+    }
+  }
+
   @override
   void dispose() {
     _wifiStatusSub?.cancel();
@@ -453,6 +495,8 @@ class RemoteController extends ChangeNotifier {
     _wifiLogSub?.cancel();
     _btLogSub?.cancel();
     _companionClient.removeListener(notifyListeners);
+    _localServer.removeListener(notifyListeners);
+    _localServer.stop();
     _wifiService.dispose();
     _btService.dispose();
     super.dispose();

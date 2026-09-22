@@ -80,6 +80,11 @@ class MainActivity : FlutterActivity() {
                     hidManager?.sendKey(keyName)
                     result.success(true)
                 }
+                "sendText" -> {
+                    val text = call.argument<String>("text") ?: ""
+                    hidManager?.sendText(text)
+                    result.success(true)
+                }
                 "unregisterHid" -> {
                     hidManager?.unregisterApp()
                     result.success(true)

@@ -5,6 +5,7 @@ import '../../services/remote_controller.dart';
 import '../../utils/constants.dart';
 import 'tactile_button.dart';
 import 'custom_macros_widget.dart';
+import 'keyboard_sheet.dart';
 
 class AppShortcutsWidget extends StatelessWidget {
   final RemoteController controller;
@@ -18,39 +19,27 @@ class AppShortcutsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // App Shortcuts Row: [ YouTube ] on Left, [ MENU ] on Right
+        // App Shortcuts Row: [ Keyboard ] on Left, [ MENU ] on Right
         Row(
           children: [
-            // Left: YouTube Button
+            // Left: Keyboard Button
             Expanded(
               child: TactileButton.pill(
                 height: 48,
                 backgroundColor: AppColors.buttonDark,
                 borderColor: AppColors.buttonBorder,
-                splashColor: AppColors.youtubeRed.withValues(alpha: 0.25),
-                tooltip: 'Tap to launch (plays recorded YouTube macro if saved). Long-press to record.',
+                splashColor: AppColors.onePlusRed.withValues(alpha: 0.25),
+                tooltip: 'TV Keyboard: Type text & search on TV',
                 onTap: () {
-                  // If user has a recorded custom shortcut for YouTube, run it
-                  final customYt = controller.customMacros.cast<MacroButton?>().firstWhere(
-                    (m) => m != null && m.title.toLowerCase().contains('youtube'),
-                    orElse: () => null,
-                  );
-                  if (customYt != null) {
-                    controller.playMacro(customYt);
-                  } else {
-                    controller.sendKey(RemoteKey.youtube);
-                  }
-                },
-                onLongPress: () {
-                  controller.startMacroRecording();
+                  KeyboardSheet.show(context, controller);
                 },
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
-                    Icon(Icons.play_arrow, color: AppColors.youtubeRed, size: 22),
-                    SizedBox(width: 6),
+                    Icon(Icons.keyboard, color: AppColors.onePlusRed, size: 22),
+                    SizedBox(width: 8),
                     Text(
-                      'YouTube',
+                      'Keyboard',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

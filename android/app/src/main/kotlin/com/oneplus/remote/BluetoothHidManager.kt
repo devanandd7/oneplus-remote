@@ -330,6 +330,85 @@ class BluetoothHidManager(private val context: Context) {
         dispatchKey(device!!, keyName)
     }
 
+    fun sendText(text: String) {
+        val hid = bluetoothHidDevice ?: return
+        val device = connectedDevice ?: findBondedTv() ?: return
+
+        executor.execute {
+            for (ch in text) {
+                sendChar(device, ch)
+            }
+        }
+    }
+
+    private fun sendChar(device: BluetoothDevice, ch: Char) {
+        val hid = bluetoothHidDevice ?: return
+        val mapping = getHidCodeForChar(ch) ?: return
+        val modifier = mapping.first
+        val scanCode = mapping.second
+
+        val reportDown = byteArrayOf(modifier, 0, scanCode, 0, 0, 0, 0, 0)
+        val reportUp = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0)
+
+        try {
+            hid.sendReport(device, REPORT_ID_KEYBOARD.toInt(), reportDown)
+            Thread.sleep(20)
+            hid.sendReport(device, REPORT_ID_KEYBOARD.toInt(), reportUp)
+            Thread.sleep(15)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error sending char '$ch': ${e.message}")
+        }
+    }
+
+    private fun getHidCodeForChar(ch: Char): Pair<Byte, Byte>? {
+        val SHIFT: Byte = 0x02
+        val NONE: Byte = 0x00
+
+        return when (ch) {
+            in 'a'..'z' -> Pair(NONE, (0x04 + (ch - 'a')).toByte())
+            in 'A'..'Z' -> Pair(SHIFT, (0x04 + (ch - 'A')).toByte())
+            in '1'..'9' -> Pair(NONE, (0x1E + (ch - '1')).toByte())
+            '0' -> Pair(NONE, 0x27.toByte())
+            ' ' -> Pair(NONE, 0x2C.toByte())
+            '\n' -> Pair(NONE, 0x28.toByte())
+            '\b' -> Pair(NONE, 0x2A.toByte())
+            '\t' -> Pair(NONE, 0x2B.toByte())
+            '-' -> Pair(NONE, 0x2D.toByte())
+            '_' -> Pair(SHIFT, 0x2D.toByte())
+            '=' -> Pair(NONE, 0x2E.toByte())
+            '+' -> Pair(SHIFT, 0x2E.toByte())
+            '[' -> Pair(NONE, 0x2F.toByte())
+            '{' -> Pair(SHIFT, 0x2F.toByte())
+            ']' -> Pair(NONE, 0x30.toByte())
+            '}' -> Pair(SHIFT, 0x30.toByte())
+            '\\' -> Pair(NONE, 0x31.toByte())
+            '|' -> Pair(SHIFT, 0x31.toByte())
+            ';' -> Pair(NONE, 0x33.toByte())
+            ':' -> Pair(SHIFT, 0x33.toByte())
+            '\'' -> Pair(NONE, 0x34.toByte())
+            '"' -> Pair(SHIFT, 0x34.toByte())
+            '`' -> Pair(NONE, 0x35.toByte())
+            '~' -> Pair(SHIFT, 0x35.toByte())
+            ',' -> Pair(NONE, 0x36.toByte())
+            '<' -> Pair(SHIFT, 0x36.toByte())
+            '.' -> Pair(NONE, 0x37.toByte())
+            '>' -> Pair(SHIFT, 0x37.toByte())
+            '/' -> Pair(NONE, 0x38.toByte())
+            '?' -> Pair(SHIFT, 0x38.toByte())
+            '!' -> Pair(SHIFT, 0x1E.toByte())
+            '@' -> Pair(SHIFT, 0x1F.toByte())
+            '#' -> Pair(SHIFT, 0x20.toByte())
+            '$' -> Pair(SHIFT, 0x21.toByte())
+            '%' -> Pair(SHIFT, 0x22.toByte())
+            '^' -> Pair(SHIFT, 0x23.toByte())
+            '&' -> Pair(SHIFT, 0x24.toByte())
+            '*' -> Pair(SHIFT, 0x25.toByte())
+            '(' -> Pair(SHIFT, 0x26.toByte())
+            ')' -> Pair(SHIFT, 0x27.toByte())
+            else -> null
+        }
+    }
+
     private fun dispatchKey(device: BluetoothDevice, keyName: String) {
         Log.d(TAG, "Dispatching HID key '$keyName' to ${device.name ?: device.address}")
         try {
