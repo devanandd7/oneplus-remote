@@ -440,6 +440,97 @@ class _RemoteScreenState extends State<RemoteScreen> {
                               )
                             : const Text('Connect to TV Companion', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
+                      const SizedBox(height: 18),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF14141E),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.download, color: AppColors.statusConnected, size: 16),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Download TV Companion APK',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'GitHub Direct Download Links:',
+                              style: TextStyle(color: Colors.white60, fontSize: 11),
+                            ),
+                            const SizedBox(height: 8),
+                            // Link 1: Direct Raw APK
+                            InkWell(
+                              onTap: () {
+                                Clipboard.setData(const ClipboardData(
+                                  text: 'https://raw.githubusercontent.com/devanandd7/oneplus-remote/tv_companion/OnePlusTvCompanion.apk',
+                                ));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Direct Raw APK link copied!')),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black45,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.white10),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '1. Direct Raw APK (1-Click)',
+                                        style: TextStyle(color: AppColors.statusConnected, fontSize: 11, fontWeight: FontWeight.w600),
+                                      ),
+                                    ),
+                                    Icon(Icons.copy, color: Colors.white60, size: 14),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            // Link 2: GitHub File Page
+                            InkWell(
+                              onTap: () {
+                                Clipboard.setData(const ClipboardData(
+                                  text: 'https://github.com/devanandd7/oneplus-remote/blob/tv_companion/OnePlusTvCompanion.apk',
+                                ));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('GitHub File Page link copied!')),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black45,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.white10),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '2. GitHub File Page',
+                                        style: TextStyle(color: Colors.white70, fontSize: 11),
+                                      ),
+                                    ),
+                                    Icon(Icons.copy, color: Colors.white60, size: 14),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ],
                 ),

@@ -367,6 +367,75 @@ class _KeyboardSheetState extends State<KeyboardSheet> {
                             },
                     ),
                   ),
+                  const SizedBox(height: 14),
+                  const Divider(color: Colors.white12, height: 1),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Or Download via GitHub:',
+                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  // GitHub Raw Direct APK
+                  InkWell(
+                    onTap: () {
+                      Clipboard.setData(const ClipboardData(
+                        text: 'https://raw.githubusercontent.com/devanandd7/oneplus-remote/tv_companion/OnePlusTvCompanion.apk',
+                      ));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Direct Raw APK link copied!')),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black45,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: const Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '1. Direct Raw APK (1-Click Download)',
+                              style: TextStyle(color: AppColors.statusConnected, fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          Icon(Icons.copy, color: Colors.white60, size: 14),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  // GitHub File Page
+                  InkWell(
+                    onTap: () {
+                      Clipboard.setData(const ClipboardData(
+                        text: 'https://github.com/devanandd7/oneplus-remote/blob/tv_companion/OnePlusTvCompanion.apk',
+                      ));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('GitHub File Page link copied!')),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black45,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: const Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '2. GitHub Repository File Page',
+                              style: TextStyle(color: Colors.white70, fontSize: 11),
+                            ),
+                          ),
+                          Icon(Icons.copy, color: Colors.white60, size: 14),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
