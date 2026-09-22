@@ -99,7 +99,7 @@ class BluetoothHidManager(private val context: Context) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val executor = Executors.newSingleThreadExecutor()
 
-    var onConnectionStateListener: ((state: String, deviceName: String?) -> Unit)? = null
+    var onConnectionStateListener: ((state: String, deviceName: String?, deviceAddress: String?) -> Unit)? = null
 
     private val profileServiceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
@@ -116,7 +116,7 @@ class BluetoothHidManager(private val context: Context) {
                 bluetoothHidDevice = null
                 isAppRegistered = false
                 connectedDevice = null
-                notifyState("DISCONNECTED", null)
+                notifyState("DISCONNECTED", null, null)
             }
         }
     }
@@ -127,18 +127,22 @@ class BluetoothHidManager(private val context: Context) {
             isAppRegistered = registered
             if (pluggedDevice != null) {
                 connectedDevice = pluggedDevice
-                notifyState("CONNECTED", pluggedDevice.name ?: pluggedDevice.address)
+                notifyState("CONNECTED", pluggedDevice.name ?: pluggedDevice.address, pluggedDevice.address)
             } else if (registered) {
-                // Check if any device is already connected via this HID profile
-                val activeDev = findConnectedOrBondedTv()
-                if (activeDev != null) {
+                val hid = bluetoothHidDevice
+                val connectedList = hid?.connectedDevices ?: emptyList()
+                if (connectedList.isNotEmpty()) {
+                    val activeDev = connectedList[0]
                     connectedDevice = activeDev
-                    notifyState("CONNECTED", activeDev.name ?: activeDev.address)
+                    notifyState("CONNECTED", activeDev.name ?: activeDev.address, activeDev.address)
                 } else {
-                    notifyState("READY_TO_PAIR", null)
+                    connectedDevice = null
+                    notifyState("READY_TO_PAIR", null, null)
+                    autoConnectBondedTv()
                 }
             } else {
-                notifyState("UNREGISTERED", null)
+                connectedDevice = null
+                notifyState("UNREGISTERED", null, null)
             }
         }
 
@@ -148,23 +152,24 @@ class BluetoothHidManager(private val context: Context) {
             } catch (e: SecurityException) {
                 device?.address
             }
-            Log.d(TAG, "onConnectionStateChanged: device=$devName, state=$state")
+            val devAddr = device?.address
+            Log.d(TAG, "onConnectionStateChanged: device=$devName ($devAddr), state=$state")
             when (state) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     connectedDevice = device
-                    notifyState("CONNECTED", devName)
+                    notifyState("CONNECTED", devName, devAddr)
                 }
                 BluetoothProfile.STATE_CONNECTING -> {
-                    notifyState("CONNECTING", devName)
+                    notifyState("CONNECTING", devName, devAddr)
                 }
                 BluetoothProfile.STATE_DISCONNECTING -> {
-                    notifyState("DISCONNECTING", devName)
+                    notifyState("DISCONNECTING", devName, devAddr)
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
-                    if (connectedDevice == device) {
+                    if (connectedDevice?.address == devAddr || connectedDevice == device) {
                         connectedDevice = null
                     }
-                    notifyState("DISCONNECTED", null)
+                    notifyState("DISCONNECTED", null, null)
                 }
             }
         }
@@ -257,33 +262,32 @@ class BluetoothHidManager(private val context: Context) {
         return list
     }
 
-    private fun findConnectedOrBondedTv(): BluetoothDevice? {
-        val hid = bluetoothHidDevice ?: return null
-        try {
-            // 1. Check if already connected in HID profile
-            val connectedList = hid.connectedDevices
-            if (connectedList.isNotEmpty()) {
-                return connectedList[0]
-            }
-
-            // 2. Check bonded devices for OnePlus or TV
-            val adapter = BluetoothAdapter.getDefaultAdapter() ?: return null
+    fun findBondedTv(): BluetoothDevice? {
+        val adapter = BluetoothAdapter.getDefaultAdapter() ?: return null
+        return try {
             val bonded = adapter.bondedDevices
-            val tv = bonded.firstOrNull {
+            bonded.firstOrNull {
                 val n = it.name?.lowercase() ?: ""
                 (n.contains("tv") || n.contains("oneplus") || n.contains("series")) &&
                 !n.contains("buds") && !n.contains("headset") && !n.contains("ear")
-            }
+            } ?: bonded.firstOrNull()
+        } catch (e: Exception) {
+            Log.e(TAG, "findBondedTv error: ${e.message}")
+            null
+        }
+    }
 
-            if (tv != null) {
-                Log.d(TAG, "Auto-connecting to bonded TV: ${tv.name} (${tv.address})")
+    fun autoConnectBondedTv() {
+        val hid = bluetoothHidDevice ?: return
+        val tv = findBondedTv() ?: return
+        try {
+            if (hid.getConnectionState(tv) != BluetoothProfile.STATE_CONNECTED) {
+                Log.d(TAG, "Auto-connecting in background to: ${tv.name} (${tv.address})")
                 hid.connect(tv)
-                return tv
             }
         } catch (e: Exception) {
-            Log.e(TAG, "findConnectedOrBondedTv error: ${e.message}")
+            Log.e(TAG, "autoConnectBondedTv error: ${e.message}")
         }
-        return null
     }
 
     fun sendKey(keyName: String) {
@@ -294,21 +298,40 @@ class BluetoothHidManager(private val context: Context) {
         }
 
         var device = connectedDevice
-        if (device == null) {
-            device = findConnectedOrBondedTv()
-            if (device != null) {
-                connectedDevice = device
-                notifyState("CONNECTED", device.name ?: device.address)
+        val isActuallyConnected = device != null && 
+            hid.getConnectionState(device) == BluetoothProfile.STATE_CONNECTED
+
+        if (!isActuallyConnected) {
+            Log.w(TAG, "Device not active. Fast reconnecting before sending '$keyName'...")
+            val tv = device ?: findBondedTv()
+            if (tv != null) {
+                connectedDevice = tv
+                notifyState("CONNECTING", tv.name ?: tv.address, tv.address)
+                try {
+                    hid.connect(tv)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Reconnection failed: ${e.message}")
+                }
+                // Queue the key press immediately after the connection handshake
+                mainHandler.postDelayed({
+                    if (hid.getConnectionState(tv) == BluetoothProfile.STATE_CONNECTED) {
+                        dispatchKey(tv, keyName)
+                    } else {
+                        Log.w(TAG, "Fast reconnect pending for TV")
+                    }
+                }, 350)
+                return
+            } else {
+                notifyState("DISCONNECTED", null, null)
+                return
             }
         }
 
-        if (device == null) {
-            Log.w(TAG, "Cannot sendKey '$keyName': No connected device or bonded TV found")
-            return
-        }
+        dispatchKey(device!!, keyName)
+    }
 
-        Log.d(TAG, "Sending HID key '$keyName' to ${device.name ?: device.address}")
-
+    private fun dispatchKey(device: BluetoothDevice, keyName: String) {
+        Log.d(TAG, "Dispatching HID key '$keyName' to ${device.name ?: device.address}")
         try {
             when (keyName.uppercase()) {
                 // Keyboard Usages
@@ -336,9 +359,9 @@ class BluetoothHidManager(private val context: Context) {
                 else -> Log.w(TAG, "Unknown key '$keyName' requested for HID")
             }
         } catch (e: SecurityException) {
-            Log.e(TAG, "SecurityException in sendKey '$keyName': ${e.message}")
+            Log.e(TAG, "SecurityException in dispatchKey '$keyName': ${e.message}")
         } catch (e: Exception) {
-            Log.e(TAG, "Exception in sendKey '$keyName': ${e.message}")
+            Log.e(TAG, "Exception in dispatchKey '$keyName': ${e.message}")
         }
     }
 
@@ -348,7 +371,16 @@ class BluetoothHidManager(private val context: Context) {
         val reportUp = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0)
 
         try {
-            hid.sendReport(device, REPORT_ID_KEYBOARD.toInt(), reportDown)
+            val sent = hid.sendReport(device, REPORT_ID_KEYBOARD.toInt(), reportDown)
+            if (!sent) {
+                Log.w(TAG, "sendKeyboardReport down returned false (link might be inactive)")
+                if (hid.getConnectionState(device) != BluetoothProfile.STATE_CONNECTED) {
+                    connectedDevice = null
+                    notifyState("DISCONNECTED", null, null)
+                    autoConnectBondedTv()
+                }
+                return
+            }
             mainHandler.postDelayed({
                 try {
                     hid.sendReport(device, REPORT_ID_KEYBOARD.toInt(), reportUp)
@@ -369,7 +401,16 @@ class BluetoothHidManager(private val context: Context) {
         val reportUp = byteArrayOf(0, 0)
 
         try {
-            hid.sendReport(device, REPORT_ID_CONSUMER.toInt(), reportDown)
+            val sent = hid.sendReport(device, REPORT_ID_CONSUMER.toInt(), reportDown)
+            if (!sent) {
+                Log.w(TAG, "sendConsumerReport down returned false (link might be inactive)")
+                if (hid.getConnectionState(device) != BluetoothProfile.STATE_CONNECTED) {
+                    connectedDevice = null
+                    notifyState("DISCONNECTED", null, null)
+                    autoConnectBondedTv()
+                }
+                return
+            }
             mainHandler.postDelayed({
                 try {
                     hid.sendReport(device, REPORT_ID_CONSUMER.toInt(), reportUp)
@@ -384,9 +425,9 @@ class BluetoothHidManager(private val context: Context) {
         }
     }
 
-    private fun notifyState(state: String, deviceName: String?) {
+    private fun notifyState(state: String, deviceName: String?, deviceAddress: String? = null) {
         mainHandler.post {
-            onConnectionStateListener?.invoke(state, deviceName)
+            onConnectionStateListener?.invoke(state, deviceName, deviceAddress)
         }
     }
 }

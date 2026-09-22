@@ -102,6 +102,8 @@ class RemoteController extends ChangeNotifier {
     }
   }
 
+  String? get connectedDeviceAddress => _btService.connectedDeviceAddress;
+
   Future<void> switchMode(RemoteEngineMode mode) async {
     if (_currentMode == mode) return;
     _currentMode = mode;

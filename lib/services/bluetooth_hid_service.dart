@@ -20,6 +20,8 @@ class BluetoothHidService {
   bool _isInitialized = false;
   String? _connectedDeviceName;
   String? get connectedDeviceName => _connectedDeviceName;
+  String? _connectedDeviceAddress;
+  String? get connectedDeviceAddress => _connectedDeviceAddress;
 
   void _log(String msg) {
     debugPrint('[BluetoothHID] $msg');
@@ -56,8 +58,10 @@ class BluetoothHidService {
         if (event is Map) {
           final state = event['state'] as String? ?? '';
           final deviceName = event['deviceName'] as String? ?? '';
+          final deviceAddress = event['deviceAddress'] as String? ?? '';
           _connectedDeviceName = deviceName.isNotEmpty ? deviceName : null;
-          _log('Native HID Event: $state (Device: $deviceName)');
+          _connectedDeviceAddress = deviceAddress.isNotEmpty ? deviceAddress : null;
+          _log('Native HID Event: $state (Device: $deviceName [$deviceAddress])');
 
           switch (state) {
             case 'CONNECTED':
@@ -71,6 +75,8 @@ class BluetoothHidService {
               _statusController.add(ConnectionStatus.connecting);
               break;
             case 'DISCONNECTED':
+              _connectedDeviceName = null;
+              _connectedDeviceAddress = null;
               _statusController.add(ConnectionStatus.disconnected);
               break;
             default:

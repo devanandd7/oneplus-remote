@@ -149,7 +149,8 @@ class _DiscoverySheetState extends State<DiscoverySheet> {
                         final d = _bondedBtDevices[idx];
                         final name = d['name'] ?? 'Device';
                         final addr = d['address'] ?? '';
-                        final isConnected = widget.controller.status == ConnectionStatus.connected;
+                        final isConnected = widget.controller.status == ConnectionStatus.connected &&
+                            widget.controller.connectedDeviceAddress == addr;
                         return Container(
                           decoration: BoxDecoration(
                             color: AppColors.buttonDark,

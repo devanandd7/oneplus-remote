@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/remote_key.dart';
+import '../../models/macro_button.dart';
 import '../../services/remote_controller.dart';
 import '../../utils/constants.dart';
 import 'tactile_button.dart';
@@ -27,7 +28,22 @@ class AppShortcutsWidget extends StatelessWidget {
                 backgroundColor: AppColors.buttonDark,
                 borderColor: AppColors.buttonBorder,
                 splashColor: AppColors.youtubeRed.withValues(alpha: 0.25),
-                onTap: () => controller.sendKey(RemoteKey.youtube),
+                tooltip: 'Tap to launch (plays recorded YouTube macro if saved). Long-press to record.',
+                onTap: () {
+                  // If user has a recorded custom shortcut for YouTube, run it
+                  final customYt = controller.customMacros.cast<MacroButton?>().firstWhere(
+                    (m) => m != null && m.title.toLowerCase().contains('youtube'),
+                    orElse: () => null,
+                  );
+                  if (customYt != null) {
+                    controller.playMacro(customYt);
+                  } else {
+                    controller.sendKey(RemoteKey.youtube);
+                  }
+                },
+                onLongPress: () {
+                  controller.startMacroRecording();
+                },
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [

@@ -21,6 +21,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         checkAndRequestBtPermissions()
     }
 
@@ -58,10 +59,11 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
 
         hidManager = BluetoothHidManager(applicationContext)
-        hidManager?.onConnectionStateListener = { state, deviceName ->
+        hidManager?.onConnectionStateListener = { state, deviceName, deviceAddress ->
             val event = mapOf(
                 "state" to state,
-                "deviceName" to (deviceName ?: "")
+                "deviceName" to (deviceName ?: ""),
+                "deviceAddress" to (deviceAddress ?: "")
             )
             eventSink?.success(event)
         }
