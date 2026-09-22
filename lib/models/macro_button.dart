@@ -6,7 +6,7 @@ class MacroStep {
 
   const MacroStep({
     required this.key,
-    this.delayMs = 280,
+    this.delayMs = 1000,
   });
 
   Map<String, dynamic> toJson() => {
@@ -20,7 +20,7 @@ class MacroStep {
         (k) => k.name == json['key'],
         orElse: () => RemoteKey.ok,
       ),
-      delayMs: json['delayMs'] as int? ?? 280,
+      delayMs: json['delayMs'] as int? ?? 1000,
     );
   }
 }

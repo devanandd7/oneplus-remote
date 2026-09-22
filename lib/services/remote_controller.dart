@@ -156,7 +156,7 @@ class RemoteController extends ChangeNotifier {
             iconCodePoint: 0xe57f, // Icons.settings
             colorValue: 0xFF2196F3, // Material Blue
             steps: [
-              const MacroStep(key: RemoteKey.settings, delayMs: 300),
+              const MacroStep(key: RemoteKey.settings, delayMs: 1000),
             ],
           ),
         ];
@@ -205,7 +205,7 @@ class RemoteController extends ChangeNotifier {
     required String title,
     required int iconCodePoint,
     required int colorValue,
-    int stepDelayMs = 280,
+    int stepDelayMs = 1000,
   }) async {
     if (_recordedSteps.isEmpty) {
       cancelMacroRecording();
@@ -261,7 +261,9 @@ class RemoteController extends ChangeNotifier {
           await _btService.sendKey(step.key);
         }
 
-        await Future.delayed(Duration(milliseconds: step.delayMs));
+        // Play each step with at least 1 second interval
+        final delay = step.delayMs < 1000 ? 1000 : step.delayMs;
+        await Future.delayed(Duration(milliseconds: delay));
       }
       _addLog('[Macro] ✅ Finished "${macro.title}".');
     } catch (e) {
