@@ -69,6 +69,7 @@ class RemoteController extends ChangeNotifier {
     _initListeners();
     _btService.initialize();
     loadSavedMacros();
+    _localServer.start();
   }
 
   void _initListeners() {

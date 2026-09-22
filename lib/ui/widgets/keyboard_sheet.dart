@@ -291,6 +291,17 @@ class _KeyboardSheetState extends State<KeyboardSheet> {
                           ),
                         ),
                         IconButton(
+                          icon: const Icon(Icons.refresh, color: Colors.white60, size: 16),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          tooltip: 'Refresh IP',
+                          onPressed: () async {
+                            await server.refreshIp();
+                            setState(() {});
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
                           icon: const Icon(Icons.copy, color: Colors.white60, size: 16),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -309,6 +320,11 @@ class _KeyboardSheetState extends State<KeyboardSheet> {
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '⚠️ Important: TV browser ke sabse upar (top) wale Address/URL bar me dalein, Google search box me nahi.',
+                    style: TextStyle(color: Colors.amber, fontSize: 10, height: 1.3),
                   ),
                   const SizedBox(height: 12),
                   SizedBox(

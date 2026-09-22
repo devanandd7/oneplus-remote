@@ -107,12 +107,23 @@ class LocalApkServerService with ChangeNotifier {
     return '127.0.0.1';
   }
 
+  Future<void> refreshIp() async {
+    _localIp = await _findLocalIpAddress();
+    notifyListeners();
+  }
+
   Future<void> _handleRequest(HttpRequest request) async {
     final path = request.uri.path;
     _log('Request: ${request.method} $path from ${request.connectionInfo?.remoteAddress.address}');
 
     // Enable CORS
     request.response.headers.add('Access-Control-Allow-Origin', '*');
+
+    if (path == '/favicon.ico') {
+      request.response.statusCode = HttpStatus.noContent;
+      await request.response.close();
+      return;
+    }
 
     if (path == '/download' || path.endsWith('.apk')) {
       await _serveApk(request);
