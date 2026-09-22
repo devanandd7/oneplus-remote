@@ -13,8 +13,10 @@ enum RemoteKey {
   assistant,
   netflix,
   menu,
+  camera,
   primeVideo,
   youtube,
+  settings,
 }
 
 class RemoteKeyHelper {
@@ -47,6 +49,10 @@ class RemoteKeyHelper {
         return 84; // KEYCODE_SEARCH
       case RemoteKey.menu:
         return 82; // KEYCODE_MENU
+      case RemoteKey.camera:
+        return 27; // KEYCODE_CAMERA
+      case RemoteKey.settings:
+        return 176; // KEYCODE_SETTINGS
       default:
         return 0; // KEYCODE_UNKNOWN
     }
@@ -93,6 +99,12 @@ class RemoteKeyHelper {
         return 'VOLUME_DOWN';
       case RemoteKey.menu:
         return 'MENU';
+      case RemoteKey.camera:
+        return 'CAMERA';
+      case RemoteKey.youtube:
+        return 'YOUTUBE';
+      case RemoteKey.settings:
+        return 'SETTINGS';
       default:
         return '';
     }

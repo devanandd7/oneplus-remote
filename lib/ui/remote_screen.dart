@@ -7,6 +7,8 @@ import 'widgets/system_buttons_widget.dart';
 import 'widgets/volume_rocker_widget.dart';
 import 'widgets/app_shortcuts_widget.dart';
 import 'widgets/discovery_sheet.dart';
+import 'widgets/macro_recording_banner.dart';
+import 'widgets/custom_macros_widget.dart';
 
 class RemoteScreen extends StatefulWidget {
   const RemoteScreen({Key? key}) : super(key: key);
@@ -129,6 +131,12 @@ class _RemoteScreenState extends State<RemoteScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            // Macro Recording / Playback Live Banner
+                            MacroRecordingBanner(
+                              controller: _controller,
+                              onSavePressed: () => CustomMacrosWidget.showSaveMacroDialog(context, _controller),
+                            ),
+
                             // Header controls: Power, Status, Mute, Mode
                             TopControlsWidget(
                               controller: _controller,

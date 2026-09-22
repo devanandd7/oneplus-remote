@@ -41,6 +41,8 @@ class BluetoothHidManager(private val context: Context) {
         private const val USAGE_MENU: Short = 0x0040
         private const val USAGE_PLAY_PAUSE: Short = 0x00CD
         private const val USAGE_VOICE_SEARCH: Short = 0x0221
+        private const val USAGE_SETTINGS: Short = 0x0096
+        private const val USAGE_YOUTUBE: Short = 0x018A
 
         /**
          * Standard USB HID Composite Descriptor
@@ -326,6 +328,11 @@ class BluetoothHidManager(private val context: Context) {
                 "MUTE" -> sendConsumerReport(device, USAGE_MUTE)
                 "PLAY_PAUSE" -> sendConsumerReport(device, USAGE_PLAY_PAUSE)
                 "ASSISTANT" -> sendConsumerReport(device, USAGE_VOICE_SEARCH)
+                "CAMERA" -> {
+                    Log.i(TAG, "Camera key triggered via Bluetooth HID")
+                }
+                "SETTINGS" -> sendConsumerReport(device, USAGE_SETTINGS)
+                "YOUTUBE" -> sendConsumerReport(device, USAGE_YOUTUBE)
                 else -> Log.w(TAG, "Unknown key '$keyName' requested for HID")
             }
         } catch (e: SecurityException) {

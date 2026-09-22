@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/remote_key.dart';
 import '../../services/remote_controller.dart';
 import '../../utils/constants.dart';
+import 'tactile_button.dart';
 
 class DpadWidget extends StatelessWidget {
   final RemoteController controller;
@@ -37,107 +39,141 @@ class DpadWidget extends StatelessWidget {
             ),
           ],
         ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // UP Button
-            Positioned(
-              top: 8,
-              child: _buildDirectionButton(
-                icon: Icons.keyboard_arrow_up,
-                keyToPress: RemoteKey.dpadUp,
-                width: outerSize * 0.45,
-                height: (outerSize - centerSize) / 2 + 10,
-              ),
-            ),
-
-            // DOWN Button
-            Positioned(
-              bottom: 8,
-              child: _buildDirectionButton(
-                icon: Icons.keyboard_arrow_down,
-                keyToPress: RemoteKey.dpadDown,
-                width: outerSize * 0.45,
-                height: (outerSize - centerSize) / 2 + 10,
-              ),
-            ),
-
-            // LEFT Button
-            Positioned(
-              left: 8,
-              child: _buildDirectionButton(
-                icon: Icons.keyboard_arrow_left,
-                keyToPress: RemoteKey.dpadLeft,
-                width: (outerSize - centerSize) / 2 + 10,
-                height: outerSize * 0.45,
-              ),
-            ),
-
-            // RIGHT Button
-            Positioned(
-              right: 8,
-              child: _buildDirectionButton(
-                icon: Icons.keyboard_arrow_right,
-                keyToPress: RemoteKey.dpadRight,
-                width: (outerSize - centerSize) / 2 + 10,
-                height: outerSize * 0.45,
-              ),
-            ),
-
-            // Center OK Button
-            InkWell(
-              onTap: () => controller.sendKey(RemoteKey.ok),
-              borderRadius: BorderRadius.circular(centerSize / 2),
-              splashColor: AppColors.onePlusRed.withValues(alpha: 0.3),
-              child: Container(
-                width: centerSize,
-                height: centerSize,
-                decoration: BoxDecoration(
-                  color: AppColors.remoteBody,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.buttonBorder, width: 2),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black54,
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
+        child: Material(
+          color: Colors.transparent,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // UP Button
+              Positioned(
+                top: 8,
+                child: _DirectionalTapButton(
+                  icon: Icons.keyboard_arrow_up,
+                  width: outerSize * 0.45,
+                  height: (outerSize - centerSize) / 2 + 10,
+                  onTap: () => controller.sendKey(RemoteKey.dpadUp),
                 ),
-                child: const Center(
-                  child: Text(
-                    'OK',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 1.2,
-                    ),
+              ),
+
+              // DOWN Button
+              Positioned(
+                bottom: 8,
+                child: _DirectionalTapButton(
+                  icon: Icons.keyboard_arrow_down,
+                  width: outerSize * 0.45,
+                  height: (outerSize - centerSize) / 2 + 10,
+                  onTap: () => controller.sendKey(RemoteKey.dpadDown),
+                ),
+              ),
+
+              // LEFT Button
+              Positioned(
+                left: 8,
+                child: _DirectionalTapButton(
+                  icon: Icons.keyboard_arrow_left,
+                  width: (outerSize - centerSize) / 2 + 10,
+                  height: outerSize * 0.45,
+                  onTap: () => controller.sendKey(RemoteKey.dpadLeft),
+                ),
+              ),
+
+              // RIGHT Button
+              Positioned(
+                right: 8,
+                child: _DirectionalTapButton(
+                  icon: Icons.keyboard_arrow_right,
+                  width: (outerSize - centerSize) / 2 + 10,
+                  height: outerSize * 0.45,
+                  onTap: () => controller.sendKey(RemoteKey.dpadRight),
+                ),
+              ),
+
+              // Center OK Button
+              TactileButton.circle(
+                size: centerSize,
+                backgroundColor: AppColors.remoteBody,
+                pressedColor: AppColors.buttonDarkPressed,
+                borderColor: AppColors.buttonBorder,
+                borderWidth: 2,
+                splashColor: AppColors.onePlusRed.withValues(alpha: 0.35),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black54,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+                onTap: () => controller.sendKey(RemoteKey.ok),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    letterSpacing: 1.2,
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildDirectionButton({
-    required IconData icon,
-    required RemoteKey keyToPress,
-    required double width,
-    required double height,
-  }) {
+class _DirectionalTapButton extends StatefulWidget {
+  final IconData icon;
+  final double width;
+  final double height;
+  final VoidCallback onTap;
+
+  const _DirectionalTapButton({
+    Key? key,
+    required this.icon,
+    required this.width,
+    required this.height,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  State<_DirectionalTapButton> createState() => _DirectionalTapButtonState();
+}
+
+class _DirectionalTapButtonState extends State<_DirectionalTapButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => controller.sendKey(keyToPress),
+      onTapDown: (_) {
+        setState(() => _isPressed = true);
+        HapticFeedback.lightImpact();
+      },
+      onTapUp: (_) {
+        if (_isPressed) setState(() => _isPressed = false);
+      },
+      onTapCancel: () {
+        if (_isPressed) setState(() => _isPressed = false);
+      },
+      onTap: widget.onTap,
       splashColor: Colors.white24,
+      highlightColor: Colors.white12,
       borderRadius: BorderRadius.circular(20),
       child: SizedBox(
-        width: width,
-        height: height,
+        width: widget.width,
+        height: widget.height,
         child: Center(
-          child: Icon(icon, color: Colors.white70, size: 34),
+          child: AnimatedScale(
+            scale: _isPressed ? 0.86 : 1.0,
+            duration: const Duration(milliseconds: 70),
+            curve: Curves.easeOutCubic,
+            child: Icon(
+              widget.icon,
+              color: _isPressed ? Colors.white : Colors.white70,
+              size: 34,
+            ),
+          ),
         ),
       ),
     );

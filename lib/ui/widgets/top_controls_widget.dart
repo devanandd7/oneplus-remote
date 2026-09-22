@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/remote_key.dart';
 import '../../models/connection_mode.dart';
 import '../../services/remote_controller.dart';
 import '../../utils/constants.dart';
+import 'tactile_button.dart';
 
 class TopControlsWidget extends StatelessWidget {
   final RemoteController controller;
@@ -50,37 +52,31 @@ class TopControlsWidget extends StatelessWidget {
             ),
 
             // Device / Network Selector
-            InkWell(
+            TactileButton.pill(
+              height: 38,
               onTap: onOpenDiscovery,
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.buttonDark,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.buttonBorder, width: 1),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildStatusDot(controller.status),
-                    const SizedBox(width: 8),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 110),
-                      child: Text(
-                        controller.connectedTitle,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+              radius: 20,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildStatusDot(controller.status),
+                  const SizedBox(width: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 110),
+                    child: Text(
+                      controller.connectedTitle,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 16),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 16),
+                ],
               ),
             ),
           ],
@@ -151,7 +147,10 @@ class TopControlsWidget extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -185,35 +184,28 @@ class TopControlsWidget extends StatelessWidget {
     required VoidCallback onTap,
     required String tooltip,
   }) {
-    return InkWell(
+    return TactileButton.circle(
+      size: 56,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(28),
+      tooltip: tooltip,
+      borderColor: borderColor,
       splashColor: iconColor.withValues(alpha: 0.3),
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: AppColors.buttonDark,
-          shape: BoxShape.circle,
-          border: Border.all(color: borderColor, width: 1.5),
-          boxShadow: glowColor != null
-              ? [
-                  BoxShadow(
-                    color: glowColor,
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  )
-                ]
-              : [
-                  const BoxShadow(
-                    color: Colors.black45,
-                    blurRadius: 6,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-        ),
-        child: Icon(icon, color: iconColor, size: 26),
-      ),
+      boxShadow: glowColor != null
+          ? [
+              BoxShadow(
+                color: glowColor,
+                blurRadius: 10,
+                spreadRadius: 1,
+              ),
+            ]
+          : const [
+              BoxShadow(
+                color: Colors.black45,
+                blurRadius: 6,
+                offset: Offset(0, 3),
+              ),
+            ],
+      child: Icon(icon, color: iconColor, size: 26),
     );
   }
 
