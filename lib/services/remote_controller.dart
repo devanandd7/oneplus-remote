@@ -459,13 +459,13 @@ class RemoteController extends ChangeNotifier {
       }
       await Future.delayed(const Duration(milliseconds: 300));
 
-      // Step D: Confirm selection with ENTER (dpadCenter)
+      // Step D: Confirm selection with ENTER (ok)
       _playbackStatusMessage = 'Step 4/4: Confirming HDMI $hdmiPort...';
       notifyListeners();
       if (_currentMode == RemoteEngineMode.wifi) {
-        await _wifiService.sendKey(RemoteKey.dpadCenter);
+        await _wifiService.sendKey(RemoteKey.ok);
       } else {
-        await _btService.sendKey(RemoteKey.dpadCenter);
+        await _btService.sendKey(RemoteKey.ok);
       }
       _addLog('[Input] ✅ Successfully switched to HDMI $hdmiPort via Ceiling Anchor!');
     } catch (e) {
