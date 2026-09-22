@@ -1,0 +1,9 @@
+<resources>
+    <color name="black">#FF0F0F12</color>
+    <color name="dark_card">#FF1A1A22</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="text_secondary">#FFAAAAAA</color>
+    <color name="oneplus_red">#FFEB0028</color>
+    <color name="status_green">#FF00E676</color>
+    <color name="status_amber">#FFFFB300</color>
+</resources>

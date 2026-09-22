@@ -9,10 +9,16 @@ import '../models/macro_button.dart';
 import 'wifi_remote_service.dart';
 import 'bluetooth_hid_service.dart';
 import 'haptic_service.dart';
+import 'tv_companion_client.dart';
 
 class RemoteController extends ChangeNotifier {
   final WifiRemoteService _wifiService = WifiRemoteService();
   final BluetoothHidService _btService = BluetoothHidService();
+  final TvCompanionClient _companionClient = TvCompanionClient();
+
+  TvCompanionClient get companionClient => _companionClient;
+  bool get isCompanionConnected => _companionClient.isConnected;
+  TvScreenState get tvScreenState => _companionClient.currentState;
 
   RemoteEngineMode _currentMode = RemoteEngineMode.bluetooth;
   RemoteEngineMode get currentMode => _currentMode;
@@ -83,6 +89,11 @@ class RemoteController extends ChangeNotifier {
 
     _btLogSub = _btService.logStream.listen((log) {
       _addLog('[BT] $log');
+    });
+
+    _companionClient.addListener(notifyListeners);
+    _companionClient.onLog.listen((log) {
+      _addLog('[Companion] $log');
     });
   }
 
@@ -261,34 +272,75 @@ class RemoteController extends ChangeNotifier {
     _isPlayingMacro = true;
     _playingMacroTitle = macro.title;
     _playingStepIndex = 0;
-    _playbackStatusMessage = 'Resetting TV: 1st HOME (exiting app)...';
-    _addLog('[Macro] ▶️ Starting "${macro.title}". Performing 2x HOME anchor reset...');
+    _playbackStatusMessage = 'Initializing playback...';
     notifyListeners();
 
     try {
-      // Step 1: 1st Home press (exits running app like YouTube, Netflix, Prime)
-      if (_currentMode == RemoteEngineMode.wifi) {
-        await _wifiService.sendKey(RemoteKey.home);
-      } else {
-        await _btService.sendKey(RemoteKey.home);
-      }
-      await Future.delayed(const Duration(milliseconds: 1500));
-      if (!_isPlayingMacro) return;
+      // 🚀 VERIFIED TV COMPANION MODE: If companion is connected to TV
+      if (_companionClient.isConnected) {
+        _addLog('[Macro] 🚀 TV Companion Connected! Using Verified Execution.');
 
-      // Step 2: 2nd Home press (Android TV resets cursor to top-left anchor on launcher)
-      _playbackStatusMessage = 'Resetting TV: 2nd HOME (cursor reset)...';
-      notifyListeners();
-      if (_currentMode == RemoteEngineMode.wifi) {
-        await _wifiService.sendKey(RemoteKey.home);
-      } else {
-        await _btService.sendKey(RemoteKey.home);
-      }
+        final titleLower = macro.title.toLowerCase();
+        String? targetPackage;
+        if (macro.id == 'default_settings' || titleLower.contains('setting')) {
+          targetPackage = 'com.android.tv.settings';
+        } else if (titleLower.contains('youtube')) {
+          targetPackage = 'com.google.android.youtube.tv';
+        } else if (titleLower.contains('camera')) {
+          targetPackage = 'com.oneplus.tv.camera';
+        }
 
-      // Step 3: Settle buffer delay (~2 seconds, so total reset wait is ~5s for heavy apps to exit)
-      _playbackStatusMessage = 'Waiting for TV launcher to settle...';
-      notifyListeners();
-      await Future.delayed(const Duration(milliseconds: 2000));
-      if (!_isPlayingMacro) return;
+        // Direct App Launch via Companion Accessibility Intent (0.1s!)
+        if (targetPackage != null) {
+          _playbackStatusMessage = 'Launching $targetPackage directly...';
+          notifyListeners();
+          final launched = await _companionClient.launchApp(targetPackage);
+          if (launched) {
+            _playbackStatusMessage = 'Verifying TV screen...';
+            notifyListeners();
+            await _companionClient.verifyScreen(targetPackage, timeoutMs: 3000);
+            _addLog('[Macro] ✅ Verified TV opened $targetPackage!');
+            return;
+          }
+        }
+
+        // Companion Global Home reset + verified screen anchor
+        _playbackStatusMessage = 'Resetting TV to Home via Companion...';
+        notifyListeners();
+        await _companionClient.sendGlobalAction('HOME');
+        await Future.delayed(const Duration(milliseconds: 1000));
+        await _companionClient.sendGlobalAction('HOME');
+        await Future.delayed(const Duration(milliseconds: 1200));
+      } else {
+        // Fallback: Standard Bluetooth HID 2x Home Anchor Reset routine
+        _playbackStatusMessage = 'Resetting TV: 1st HOME (exiting app)...';
+        _addLog('[Macro] ▶️ Starting "${macro.title}". Performing 2x HOME anchor reset...');
+        notifyListeners();
+
+        // Step 1: 1st Home press (exits running app like YouTube, Netflix, Prime)
+        if (_currentMode == RemoteEngineMode.wifi) {
+          await _wifiService.sendKey(RemoteKey.home);
+        } else {
+          await _btService.sendKey(RemoteKey.home);
+        }
+        await Future.delayed(const Duration(milliseconds: 1500));
+        if (!_isPlayingMacro) return;
+
+        // Step 2: 2nd Home press (Android TV resets cursor to top-left anchor on launcher)
+        _playbackStatusMessage = 'Resetting TV: 2nd HOME (cursor reset)...';
+        notifyListeners();
+        if (_currentMode == RemoteEngineMode.wifi) {
+          await _wifiService.sendKey(RemoteKey.home);
+        } else {
+          await _btService.sendKey(RemoteKey.home);
+        }
+
+        // Step 3: Settle buffer delay (~2 seconds, so total reset wait is ~5s for heavy apps to exit)
+        _playbackStatusMessage = 'Waiting for TV launcher to settle...';
+        notifyListeners();
+        await Future.delayed(const Duration(milliseconds: 2000));
+        if (!_isPlayingMacro) return;
+      }
 
       // Step 4: If macro has leading HOME keys from earlier recordings, skip them
       // since the 2x Home Anchor Reset has already placed the TV at the Home anchor.
@@ -383,12 +435,24 @@ class RemoteController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> connectCompanion(String host, {int port = 8765}) async {
+    final ok = await _companionClient.connect(host, port: port);
+    notifyListeners();
+    return ok;
+  }
+
+  Future<void> disconnectCompanion() async {
+    await _companionClient.disconnect();
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _wifiStatusSub?.cancel();
     _btStatusSub?.cancel();
     _wifiLogSub?.cancel();
     _btLogSub?.cancel();
+    _companionClient.removeListener(notifyListeners);
     _wifiService.dispose();
     _btService.dispose();
     super.dispose();

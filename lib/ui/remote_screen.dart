@@ -84,18 +84,68 @@ class _RemoteScreenState extends State<RemoteScreen> {
                           ),
                         ],
                       ),
-                      IconButton(
-                        icon: Icon(
-                          _showLogs ? Icons.terminal : Icons.terminal_outlined,
-                          color: _showLogs ? AppColors.onePlusRed : Colors.white54,
-                          size: 22,
-                        ),
-                        tooltip: 'Toggle Protocol Logs',
-                        onPressed: () {
-                          setState(() {
-                            _showLogs = !_showLogs;
-                          });
-                        },
+                      Row(
+                        children: [
+                          // TV Companion Bridge Indicator / Connection Button
+                          InkWell(
+                            onTap: () => _showCompanionDialog(context),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: _controller.isCompanionConnected
+                                    ? const Color(0xFF10281F)
+                                    : const Color(0xFF1F1F28),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: _controller.isCompanionConnected
+                                      ? AppColors.statusConnected
+                                      : Colors.white24,
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.tv,
+                                    size: 14,
+                                    color: _controller.isCompanionConnected
+                                        ? AppColors.statusConnected
+                                        : Colors.white54,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _controller.isCompanionConnected
+                                        ? 'TV: ${_controller.tvScreenState.displayName}'
+                                        : 'TV Bridge',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: _controller.isCompanionConnected
+                                          ? AppColors.statusConnected
+                                          : Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton(
+                            icon: Icon(
+                              _showLogs ? Icons.terminal : Icons.terminal_outlined,
+                              color: _showLogs ? AppColors.onePlusRed : Colors.white54,
+                              size: 22,
+                            ),
+                            tooltip: 'Toggle Protocol Logs',
+                            onPressed: () {
+                              setState(() {
+                                _showLogs = !_showLogs;
+                              });
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -223,6 +273,187 @@ class _RemoteScreenState extends State<RemoteScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showCompanionDialog(BuildContext context) {
+    final ipController = TextEditingController(
+      text: _controller.companionClient.connectedIp ?? '192.168.1.',
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final isConnected = _controller.isCompanionConnected;
+            final isConnecting = _controller.companionClient.isConnecting;
+            final state = _controller.tvScreenState;
+
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E1E28),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isConnected
+                          ? AppColors.statusConnected.withValues(alpha: 0.15)
+                          : AppColors.onePlusRed.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.tv,
+                      color: isConnected ? AppColors.statusConnected : AppColors.onePlusRed,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'TV Companion Bridge',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (isConnected) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10281F),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.statusConnected, width: 1),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Icon(Icons.check_circle, color: AppColors.statusConnected, size: 16),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Companion Active (Verified Mode)',
+                                  style: TextStyle(
+                                    color: AppColors.statusConnected,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'TV IP: ${_controller.companionClient.connectedIp}:8765',
+                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Current App: ${state.displayName} (${state.package.isEmpty ? "Launcher" : state.package})',
+                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                            if (state.focused.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'Focused: "${state.focused}"',
+                                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.power_settings_new, size: 16),
+                        label: const Text('Disconnect TV Bridge'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white12,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(40),
+                        ),
+                        onPressed: () async {
+                          await _controller.disconnectCompanion();
+                          setDialogState(() {});
+                        },
+                      ),
+                    ] else ...[
+                      const Text(
+                        'Connect directly to the OnePlus TV Companion app installed on your TV for real-time verification and instant 1-click app launching.',
+                        style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: ipController,
+                        style: const TextStyle(color: Colors.white, fontFamily: 'monospace'),
+                        decoration: InputDecoration(
+                          labelText: 'TV IP Address',
+                          labelStyle: const TextStyle(color: Colors.white60),
+                          hintText: 'e.g. 192.168.1.15',
+                          hintStyle: const TextStyle(color: Colors.white24),
+                          filled: true,
+                          fillColor: const Color(0xFF14141C),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white24),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.onePlusRed),
+                          ),
+                        ),
+                        keyboardType: TextInputType.datetime,
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Tip: Open the OnePlus TV Companion app on your TV to see the exact IP address.',
+                        style: TextStyle(color: Colors.white38, fontSize: 11),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.onePlusRed,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(44),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: isConnecting
+                            ? null
+                            : () async {
+                                final ip = ipController.text.trim();
+                                if (ip.isEmpty) return;
+                                setDialogState(() {});
+                                final ok = await _controller.connectCompanion(ip);
+                                setDialogState(() {});
+                                if (ok && context.mounted) {
+                                  Navigator.pop(ctx);
+                                }
+                              },
+                        child: isConnecting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Text('Connect to TV Companion', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Close', style: TextStyle(color: Colors.white60)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">OnePlus TV Companion</string>
+    <string name="accessibility_service_description">Provides real-time screen inspection, verified button clicking, and direct app launching for the OnePlus Remote mobile application.</string>
+</resources>

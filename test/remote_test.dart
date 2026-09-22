@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oneplus_remote/models/remote_key.dart';
 import 'package:oneplus_remote/models/tv_device.dart';
 import 'package:oneplus_remote/models/macro_button.dart';
+import 'package:oneplus_remote/services/tv_companion_client.dart';
 
 void main() {
   group('RemoteKey Mappings', () {
@@ -83,6 +84,25 @@ void main() {
       expect(restored.steps.length, 4);
       expect(restored.steps[0].key, RemoteKey.home);
       expect(restored.steps[3].key, RemoteKey.ok);
+    });
+  });
+
+  group('TvCompanion Model', () {
+    test('TvScreenState parses and detects system screens accurately', () {
+      final json = {
+        'package': 'com.google.android.youtube.tv',
+        'activity': 'com.google.android.apps.youtube.tv.activity.MainActivity',
+        'focused': 'Search',
+        'accessibilityActive': true,
+      };
+
+      final state = TvScreenState.fromJson(json);
+      expect(state.package, 'com.google.android.youtube.tv');
+      expect(state.focused, 'Search');
+      expect(state.isYouTube, isTrue);
+      expect(state.isHome, isFalse);
+      expect(state.displayName, 'YouTube');
+      expect(state.isAccessibilityActive, isTrue);
     });
   });
 }

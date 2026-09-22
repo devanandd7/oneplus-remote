@@ -41,7 +41,15 @@ migrate_working_dir/
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
 
-# Exceptions to above rules.
 !**/android/gradle/wrapper/gradle-wrapper.jar
 !**/android/gradlew
 !**/android/gradlew.bat
+
+# TV Companion
+*.apk
+tv_companion/local.properties
+tv_companion/.gradle/
+tv_companion/**/build/
+!**/tv_companion/gradle/wrapper/gradle-wrapper.jar
+!**/tv_companion/gradlew
+!**/tv_companion/gradlew.bat
