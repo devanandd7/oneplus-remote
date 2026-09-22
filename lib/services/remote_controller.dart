@@ -48,6 +48,9 @@ class RemoteController extends ChangeNotifier {
   int _playingStepIndex = 0;
   int get playingStepIndex => _playingStepIndex;
 
+  String _playbackStatusMessage = '';
+  String get playbackStatusMessage => _playbackStatusMessage;
+
   StreamSubscription? _wifiStatusSub;
   StreamSubscription? _btStatusSub;
   StreamSubscription? _wifiLogSub;
@@ -181,17 +184,21 @@ class RemoteController extends ChangeNotifier {
   Future<void> startMacroRecording() async {
     _isRecordingMacro = true;
     _recordedSteps.clear();
-    // Step 1 is always HOME to ensure a stable reference point on the TV
-    _recordedSteps.add(RemoteKey.home);
-    _addLog('[Macro] 🔴 Recording started. Sent HOME reset to TV.');
+    _addLog('[Macro] 🔴 Recording started. Setting TV to Home anchor (please wait ~3s)...');
     notifyListeners();
 
-    // Send Home to TV so it resets to the launcher immediately
+    // Reset TV to Home anchor: 1st Home exits any current app, 2nd Home sets focus to Top-Left
     if (_currentMode == RemoteEngineMode.wifi) {
+      await _wifiService.sendKey(RemoteKey.home);
+      await Future.delayed(const Duration(milliseconds: 1500));
       await _wifiService.sendKey(RemoteKey.home);
     } else {
       await _btService.sendKey(RemoteKey.home);
+      await Future.delayed(const Duration(milliseconds: 1500));
+      await _btService.sendKey(RemoteKey.home);
     }
+    _addLog('[Macro] 🎯 TV ready at Home anchor. Press buttons on remote to record your shortcut.');
+    notifyListeners();
   }
 
   void cancelMacroRecording() {
@@ -237,22 +244,72 @@ class RemoteController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void stopMacroPlayback() {
+    if (_isPlayingMacro) {
+      _isPlayingMacro = false;
+      _playingMacroTitle = null;
+      _playingStepIndex = 0;
+      _playbackStatusMessage = '';
+      _addLog('[Macro] ⏹️ Playback stopped.');
+      notifyListeners();
+    }
+  }
+
   Future<void> playMacro(MacroButton macro) async {
     if (_isPlayingMacro) return;
 
     _isPlayingMacro = true;
     _playingMacroTitle = macro.title;
     _playingStepIndex = 0;
-    _addLog('[Macro] ▶️ Executing "${macro.title}" (${macro.steps.length} steps)...');
+    _playbackStatusMessage = 'Resetting TV: 1st HOME (exiting app)...';
+    _addLog('[Macro] ▶️ Starting "${macro.title}". Performing 2x HOME anchor reset...');
     notifyListeners();
 
     try {
-      for (int i = 0; i < macro.steps.length; i++) {
+      // Step 1: 1st Home press (exits running app like YouTube, Netflix, Prime)
+      if (_currentMode == RemoteEngineMode.wifi) {
+        await _wifiService.sendKey(RemoteKey.home);
+      } else {
+        await _btService.sendKey(RemoteKey.home);
+      }
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (!_isPlayingMacro) return;
+
+      // Step 2: 2nd Home press (Android TV resets cursor to top-left anchor on launcher)
+      _playbackStatusMessage = 'Resetting TV: 2nd HOME (cursor reset)...';
+      notifyListeners();
+      if (_currentMode == RemoteEngineMode.wifi) {
+        await _wifiService.sendKey(RemoteKey.home);
+      } else {
+        await _btService.sendKey(RemoteKey.home);
+      }
+
+      // Step 3: Settle buffer delay (~2 seconds, so total reset wait is ~5s for heavy apps to exit)
+      _playbackStatusMessage = 'Waiting for TV launcher to settle...';
+      notifyListeners();
+      await Future.delayed(const Duration(milliseconds: 2000));
+      if (!_isPlayingMacro) return;
+
+      // Step 4: If macro has leading HOME keys from earlier recordings, skip them
+      // since the 2x Home Anchor Reset has already placed the TV at the Home anchor.
+      List<MacroStep> stepsToExecute = macro.steps;
+      int firstNonHome = stepsToExecute.indexWhere((s) => s.key != RemoteKey.home);
+      if (firstNonHome > 0) {
+        stepsToExecute = stepsToExecute.sublist(firstNonHome);
+      } else if (firstNonHome == -1) {
+        // Macro contains only HOME keys
+        stepsToExecute = [];
+      }
+
+      _addLog('[Macro] ▶️ Executing ${stepsToExecute.length} recorded steps (1s interval)...');
+
+      for (int i = 0; i < stepsToExecute.length; i++) {
         if (!_isPlayingMacro) break; // User stopped or cancelled
         _playingStepIndex = i + 1;
+        _playbackStatusMessage = 'Step ${i + 1} of ${stepsToExecute.length} (${stepsToExecute[i].key.name.toUpperCase()})...';
         notifyListeners();
 
-        final step = macro.steps[i];
+        final step = stepsToExecute[i];
         HapticService.navigationClick();
 
         if (_currentMode == RemoteEngineMode.wifi) {
@@ -272,6 +329,7 @@ class RemoteController extends ChangeNotifier {
       _isPlayingMacro = false;
       _playingMacroTitle = null;
       _playingStepIndex = 0;
+      _playbackStatusMessage = '';
       notifyListeners();
     }
   }

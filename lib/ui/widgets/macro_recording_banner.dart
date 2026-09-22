@@ -61,7 +61,9 @@ class MacroRecordingBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Executing step ${controller.playingStepIndex}...',
+                    controller.playbackStatusMessage.isNotEmpty
+                        ? controller.playbackStatusMessage
+                        : 'Executing step ${controller.playingStepIndex}...',
                     style: const TextStyle(
                       color: AppColors.statusConnected,
                       fontSize: 11,
@@ -70,6 +72,13 @@ class MacroRecordingBanner extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+              onPressed: () => controller.stopMacroPlayback(),
+              tooltip: 'Stop Replay',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
             ),
           ],
         ),
